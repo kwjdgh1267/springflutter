@@ -72,10 +72,15 @@ class _FitnessCalendarState extends State<FitnessCalendar> {
   }
 }
 
-class ExerciseListScreen extends StatelessWidget {
+class ExerciseListScreen extends StatefulWidget {
   final DateTime selectedDate;
-
   ExerciseListScreen({required this.selectedDate}) : super();
+  @override
+  _ExerciseListScreenState createState() => _ExerciseListScreenState();
+}
+class _ExerciseListScreenState extends State<ExerciseListScreen> {
+  TextEditingController searchController = TextEditingController();
+  String searchKeyword = '';
 
   @override
   Widget build(BuildContext context) {
@@ -86,9 +91,41 @@ class ExerciseListScreen extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      labelText: '운동 검색',
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.search),
+                  onPressed: () {
+                    setState(() {
+                      searchKeyword = searchController.text;
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.clear),
+                  onPressed: () {
+                    setState(() {
+                      searchController.clear();
+                      searchKeyword = '';
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: FutureBuilder<List<String>>(
-              future: fetchExercises(), // 백엔드에서 운동 목록 가져오기
+              future: fetchExercises(searchKeyword),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -96,7 +133,7 @@ class ExerciseListScreen extends StatelessWidget {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else {
                   return ListView.builder(
-                    itemCount: snapshot.data?.length,
+                    itemCount: snapshot.data?.length ?? 0,
                     itemBuilder: (context, index) {
                       return ListTile(
                         title: Text(snapshot.data![index]),
@@ -105,7 +142,7 @@ class ExerciseListScreen extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => ExerciseDetailsScreen(
-                                selectedDate: selectedDate,
+                                selectedDate: widget.selectedDate,
                                 exerciseName: snapshot.data![index],
                               ),
                             ),
@@ -122,14 +159,14 @@ class ExerciseListScreen extends StatelessWidget {
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              '${selectedDate.year}-${selectedDate.month}-${selectedDate.day} 운동 루틴',
+              '${widget.selectedDate.year}-${widget.selectedDate.month}-${widget.selectedDate.day} 운동 루틴',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
           SizedBox(height: 10),
           Expanded(
             child: FutureBuilder<List<String>>(
-              future: fetchExerciseRecords(selectedDate), // 백엔드에서 해당 날짜에 등록된 운동 기록 가져오기
+              future: fetchExerciseRecords(widget.selectedDate),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -137,13 +174,11 @@ class ExerciseListScreen extends StatelessWidget {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else {
                   return ListView.builder(
-                    itemCount: snapshot.data?.length,
+                    itemCount: snapshot.data?.length ?? 0,
                     itemBuilder: (context, index) {
                       return ListTile(
                         title: Text(snapshot.data![index]),
-                        // 각 운동 기록을 누르면 상세 정보 페이지로 이동할 수 있도록 설정
                         onTap: () {
-                          // TODO: ExerciseRecordDetailsScreen으로 이동하는 코드 추가
                         },
                       );
                     },
@@ -157,6 +192,7 @@ class ExerciseListScreen extends StatelessWidget {
     );
   }
 }
+
 
 // 백엔드로부터 해당 날짜에 등록된 운동 기록을 가져오는 함수
 Future<List<String>> fetchExerciseRecords(DateTime selectedDate) async {
@@ -244,8 +280,9 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
 }
 
 // Backend로부터 운동 목록을 가져오는 함수
-Future<List<String>> fetchExercises() async {
-  final response = await http.get(Uri.parse('http://localhost:8080/exercise'));
+Future<List<String>> fetchExercises(String searchKeyword) async {
+  final queryParameters = searchKeyword.isNotEmpty ? '?type=$searchKeyword' : '';
+  final response = await http.get(Uri.parse('http://localhost:8080/exercise$queryParameters'));
   if (response.statusCode == 200) {
     List<dynamic> data = json.decode(response.body);
     List<String> exercises = List<String>.from(data.map((item) => item['title']));

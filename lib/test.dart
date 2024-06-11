@@ -27,7 +27,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String _response = '';
 
   Future<void> _fetchData() async {
-    final response = await http.get(Uri.parse('http://127.0.0.1:8080/exercise'));
+    final response = await http.get(Uri.parse('http://127.0.0.1:8080/test'));
     if (response.statusCode == 200) {
       setState(() {
         _response = response.body;
