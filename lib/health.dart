@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
+//맨 처음 달력화면, 날짜 선택 후 버튼 누르면 날짜 정보와 함께 화면 전환
 class FitnessCalendar extends StatefulWidget {
   @override
   _FitnessCalendarState createState() => _FitnessCalendarState();
@@ -99,7 +99,7 @@ class _FitnessCalendarState extends State<FitnessCalendar> {
   }
 }
 
-
+//운동 목록과 검색창, 등록된 운동을 보여줌
 class ExerciseListScreen extends StatefulWidget {
   final DateTime selectedDate;
   ExerciseListScreen({required this.selectedDate}) : super();
@@ -117,7 +117,7 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
         title: Text('운동 목록'),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
-          onPressed: () {
+          onPressed: () {//등록전 화면 대신 캘린더로 돌아가도록 popUntil 사용
             Navigator.popUntil(context, ModalRoute.withName('/'));
           },
         ),
@@ -200,7 +200,7 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
           SizedBox(height: 10),
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: fetchExerciseRecords(widget.selectedDate),
+              future: fetchExerciseRecords(widget.selectedDate),//등록된 운동 목록을 가져오는 함수로 화면을 열때마다 실행되야함
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -262,7 +262,7 @@ Future<List<Map<String, dynamic>>> fetchExerciseRecords(DateTime selectedDate) a
   }
 }
 
-
+//운동 등록 화면. 중량,횟수,세트수를 입략받아서 저장함. 저장시 자동으로 운동 목록 화면으로 전환
 class ExerciseDetailsScreen extends StatefulWidget {
   final DateTime selectedDate;
   final String exerciseName;
